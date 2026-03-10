@@ -1,3 +1,10 @@
+# Team Name: Crazy Coders
+
+# Team Members: 
+
+S.Mahesh Naik
+C.Manoj Kumar
+
 # Document-Converter-Suite
 
 I got tired of using "free" online converters that were either covered in ads, forced me to create an account, or—worst of all—uploaded my private documents to their servers.
