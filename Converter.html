@@ -1,0 +1,899 @@
+<!doctype html>
+<html lang="en" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DocFlow - Document Converter Suite</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="/_sdk/data_sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'DM Sans', sans-serif; }
+    .gradient-bg { background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%); }
+    .card-gradient { background: linear-gradient(145deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%); }
+    .glow { box-shadow: 0 0 40px rgba(99, 102, 241, 0.3); }
+    .tool-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+    .tool-card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
+    .drop-zone { border: 2px dashed rgba(99, 102, 241, 0.5); transition: all 0.3s ease; }
+    .drop-zone:hover, .drop-zone.dragover { border-color: #6366f1; background: rgba(99, 102, 241, 0.1); }
+    .pulse-ring { animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+    @keyframes pulse-ring { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+    .slide-in { animation: slideIn 0.3s ease-out; }
+    @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .progress-bar { transition: width 0.3s ease; }
+    .btn-primary { background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); }
+    .btn-primary:hover { background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); }
+    body { box-sizing: border-box; }
+  </style>
+ </head>
+ <body class="h-full gradient-bg text-white overflow-auto">
+  <div id="app" class="min-h-full w-full"><!-- Header -->
+   <header class="py-6 px-4 sm:px-8 border-b border-slate-700">
+    <div class="max-w-6xl mx-auto flex items-center justify-between">
+     <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl btn-primary flex items-center justify-center glow">
+       <svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+       </svg>
+      </div>
+      <div>
+       <h1 id="app-title" class="text-xl font-bold">DocFlow</h1>
+       <p id="tagline" class="text-xs text-slate-400">Your all-in-one document toolkit</p>
+      </div>
+     </div>
+     <div class="flex gap-2"><button onclick="showHistory()" id="history-btn" class="flex items-center gap-2 px-4 py-2 bg-slate-800/50 hover:bg-slate-700 rounded-lg transition-colors border border-slate-700">
+       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+       </svg> History </button>
+      <nav id="nav-back" class="hidden"><button onclick="showHome()" class="flex items-center gap-2 text-slate-300 hover:text-white transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg> Back </button>
+      </nav>
+     </div>
+    </div>
+   </header><!-- Main Content -->
+   <main class="px-4 sm:px-8 pb-12">
+    <div class="max-w-6xl mx-auto"><!-- Home View -->
+     <div id="home-view">
+      <div class="text-center mb-12 py-8">
+       <h2 class="text-3xl sm:text-4xl font-bold mb-4"><span class="bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">Transform Your Documents</span></h2>
+       <p class="text-slate-400 max-w-xl mx-auto">Powerful PDF tools. Convert, merge, split, compress files with privacy-first technology.</p>
+      </div><!-- Tools Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"><button onclick="showTool('merge')" class="tool-card card-gradient rounded-2xl p-6 text-left border border-white/10 hover:border-indigo-500/50">
+        <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center mb-4">
+         <svg class="w-7 h-7" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+         </svg>
+        </div><h3 class="text-lg font-semibold mb-2">Merge PDFs</h3><p class="text-sm text-slate-400">Combine multiple PDF files</p></button> <button onclick="showTool('split')" class="tool-card card-gradient rounded-2xl p-6 text-left border border-white/10 hover:border-purple-500/50">
+        <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center mb-4">
+         <svg class="w-7 h-7" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
+         </svg>
+        </div><h3 class="text-lg font-semibold mb-2">Split PDF</h3><p class="text-sm text-slate-400">Extract or split pages</p></button> <button onclick="showTool('compress')" class="tool-card card-gradient rounded-2xl p-6 text-left border border-white/10 hover:border-emerald-500/50">
+        <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center mb-4">
+         <svg class="w-7 h-7" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+         </svg>
+        </div><h3 class="text-lg font-semibold mb-2">Compress PDF</h3><p class="text-sm text-slate-400">Reduce file size</p></button> <button onclick="showTool('watermark')" class="tool-card card-gradient rounded-2xl p-6 text-left border border-white/10 hover:border-amber-500/50">
+        <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center mb-4">
+         <svg class="w-7 h-7" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /> <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13l2 2 4-4" />
+         </svg>
+        </div><h3 class="text-lg font-semibold mb-2">Add Watermark</h3><p class="text-sm text-slate-400">Protect your documents</p></button> <button onclick="showTool('word-to-pdf')" class="tool-card card-gradient rounded-2xl p-6 text-left border border-white/10 hover:border-blue-500/50">
+        <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center mb-4">
+         <svg class="w-7 h-7" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+         </svg>
+        </div><h3 class="text-lg font-semibold mb-2">Word to PDF</h3><p class="text-sm text-slate-400">Convert DOCX to PDF</p></button> <button onclick="showTool('pdf-to-text')" class="tool-card card-gradient rounded-2xl p-6 text-left border border-white/10 hover:border-rose-500/50">
+        <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-rose-500 to-rose-600 flex items-center justify-center mb-4">
+         <svg class="w-7 h-7" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+         </svg>
+        </div><h3 class="text-lg font-semibold mb-2">Extract Text</h3><p class="text-sm text-slate-400">Get text from PDFs</p></button>
+      </div>
+     </div><!-- Tool View -->
+     <div id="tool-view" class="hidden slide-in"></div><!-- History View -->
+     <div id="history-view" class="hidden slide-in">
+      <div class="mb-8">
+       <h2 class="text-3xl font-bold mb-2">Conversion History</h2>
+       <p class="text-slate-400">Your saved conversions are stored securely</p>
+      </div>
+      <div id="history-list" class="space-y-4">
+       <div class="text-center py-12">
+        <svg class="w-12 h-12 text-slate-600 mx-auto mb-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        <p class="text-slate-400">No conversions yet. Start by converting a document!</p>
+       </div>
+      </div>
+     </div>
+    </div>
+   </main><!-- Toast Notification -->
+   <div id="toast" class="fixed bottom-6 right-6 bg-slate-800 border border-slate-700 rounded-xl px-5 py-3 shadow-xl transform translate-y-20 opacity-0 transition-all duration-300 z-50">
+    <div class="flex items-center gap-3">
+     <div id="toast-icon" class="w-6 h-6 rounded-full flex items-center justify-center"></div><span id="toast-message" class="text-sm"></span>
+    </div>
+   </div>
+  </div>
+  <script>
+    const defaultConfig = {
+      app_title: 'DocFlow',
+      tagline: 'Your all-in-one document toolkit'
+    };
+
+    let config = { ...defaultConfig };
+    let currentFiles = [];
+    let currentTool = null;
+    let allConversions = [];
+
+    // Initialize Data SDK
+    const dataHandler = {
+      onDataChanged(data) {
+        allConversions = data || [];
+      }
+    };
+
+    // Initialize all SDKs
+    async function initializeSdks() {
+      try {
+        // Initialize Element SDK
+        window.elementSdk.init({
+          defaultConfig,
+          onConfigChange: async (newConfig) => {
+            config = { ...defaultConfig, ...newConfig };
+            document.getElementById('app-title').textContent = config.app_title || defaultConfig.app_title;
+            document.getElementById('tagline').textContent = config.tagline || defaultConfig.tagline;
+          },
+          mapToCapabilities: (cfg) => ({
+            recolorables: [],
+            borderables: [],
+            fontEditable: undefined,
+            fontSizeable: undefined
+          }),
+          mapToEditPanelValues: (cfg) => new Map([
+            ['app_title', cfg.app_title || defaultConfig.app_title],
+            ['tagline', cfg.tagline || defaultConfig.tagline]
+          ])
+        });
+
+        // Initialize Data SDK
+        const dataResult = await window.dataSdk.init(dataHandler);
+        if (!dataResult.isOk) {
+          console.error('Data SDK init error:', dataResult.error);
+        }
+      } catch (error) {
+        console.error('SDK initialization error:', error);
+      }
+    }
+
+    initializeSdks();
+
+    // Show toast
+    function showToast(message, type = 'success') {
+      const toast = document.getElementById('toast');
+      const icon = document.getElementById('toast-icon');
+      const msg = document.getElementById('toast-message');
+      
+      msg.textContent = message;
+      icon.className = 'w-6 h-6 rounded-full flex items-center justify-center';
+      
+      if (type === 'success') {
+        icon.classList.add('bg-emerald-500');
+        icon.innerHTML = '<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>';
+      } else if (type === 'error') {
+        icon.classList.add('bg-red-500');
+        icon.innerHTML = '<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>';
+      } else {
+        icon.classList.add('bg-blue-500');
+        icon.innerHTML = '<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
+      }
+      
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      setTimeout(() => toast.classList.add('translate-y-20', 'opacity-0'), 3000);
+    }
+
+    // Navigation
+    function showHome() {
+      document.getElementById('home-view').classList.remove('hidden');
+      document.getElementById('tool-view').classList.add('hidden');
+      document.getElementById('history-view').classList.add('hidden');
+      document.getElementById('nav-back').classList.add('hidden');
+      document.getElementById('history-btn').classList.remove('hidden');
+      currentFiles = [];
+      currentTool = null;
+    }
+
+    function showTool(tool) {
+      currentTool = tool;
+      document.getElementById('home-view').classList.add('hidden');
+      document.getElementById('tool-view').classList.remove('hidden');
+      document.getElementById('history-view').classList.add('hidden');
+      document.getElementById('nav-back').classList.remove('hidden');
+      document.getElementById('history-btn').classList.add('hidden');
+      
+      const toolView = document.getElementById('tool-view');
+      toolView.innerHTML = getToolTemplate(tool);
+      setupDropZone();
+    }
+
+    function showHistory() {
+      document.getElementById('home-view').classList.add('hidden');
+      document.getElementById('tool-view').classList.add('hidden');
+      document.getElementById('history-view').classList.remove('hidden');
+      document.getElementById('nav-back').classList.remove('hidden');
+      document.getElementById('history-btn').classList.add('hidden');
+      renderHistory();
+    }
+
+    // Render history
+    function renderHistory() {
+      const historyList = document.getElementById('history-list');
+      
+      if (!allConversions || allConversions.length === 0) {
+        historyList.innerHTML = `
+          <div class="text-center py-12">
+            <svg class="w-12 h-12 text-slate-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            <p class="text-slate-400">No conversions yet.</p>
+          </div>
+        `;
+        return;
+      }
+
+      historyList.innerHTML = allConversions
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+        .map(item => {
+          const date = new Date(item.createdAt).toLocaleDateString();
+          const time = new Date(item.createdAt).toLocaleTimeString();
+          
+          return `
+            <div class="card-gradient rounded-xl p-4 border border-white/10 flex items-center justify-between">
+              <div class="flex-1">
+                <div class="flex items-center gap-3 mb-2">
+                  <div class="w-10 h-10 rounded-lg bg-indigo-500/20 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <p class="font-medium text-sm">${item.originalFileName}</p>
+                    <p class="text-xs text-slate-400">${item.conversionType} • ${date} ${time}</p>
+                  </div>
+                </div>
+                <p class="text-xs text-slate-500 ml-13">${formatSize(item.originalSize)} → ${formatSize(item.convertedSize)}</p>
+              </div>
+              <div class="flex gap-2">
+                <button onclick="downloadConversion('${item.__backendId}')" class="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-sm transition-colors">
+                  Download
+                </button>
+                <button onclick="deleteConversion('${item.__backendId}')" class="px-3 py-1 bg-red-600/20 hover:bg-red-600 text-red-300 hover:text-white rounded-lg text-sm transition-colors">
+                  Delete
+                </button>
+              </div>
+            </div>
+          `;
+        }).join('');
+    }
+
+    // Get tool template
+    function getToolTemplate(tool) {
+      const templates = {
+        'merge': {
+          title: 'Merge PDFs',
+          desc: 'Combine multiple PDFs into one document',
+          accept: '.pdf',
+          multi: true,
+          action: 'Merge Files'
+        },
+        'split': {
+          title: 'Split PDF',
+          desc: 'Extract specific pages from a PDF',
+          accept: '.pdf',
+          multi: false,
+          action: 'Split PDF',
+          extra: `<div class="mt-4"><label class="block text-sm text-slate-400 mb-2">Pages (e.g., 1-3, 5, 7-9)</label><input type="text" id="page-range" placeholder="1-3, 5" class="w-full bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"></div>`
+        },
+        'compress': {
+          title: 'Compress PDF',
+          desc: 'Reduce file size while maintaining quality',
+          accept: '.pdf',
+          multi: false,
+          action: 'Compress PDF'
+        },
+        'watermark': {
+          title: 'Add Watermark',
+          desc: 'Add text watermark to protect documents',
+          accept: '.pdf',
+          multi: false,
+          action: 'Add Watermark',
+          extra: `<div class="mt-4 space-y-4"><div><label class="block text-sm text-slate-400 mb-2">Watermark Text</label><input type="text" id="watermark-text" placeholder="CONFIDENTIAL" class="w-full bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"></div><div class="grid grid-cols-2 gap-4"><div><label class="block text-sm text-slate-400 mb-2">Opacity</label><input type="range" id="watermark-opacity" min="10" max="100" value="30" class="w-full"></div><div><label class="block text-sm text-slate-400 mb-2">Angle</label><input type="number" id="watermark-rotation" value="45" min="0" max="360" class="w-full bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-indigo-500"></div></div></div></div>`
+        },
+        'word-to-pdf': {
+          title: 'Word to PDF',
+          desc: 'Convert DOCX documents to PDF format',
+          accept: '.docx',
+          multi: false,
+          action: 'Convert to PDF'
+        },
+        'pdf-to-text': {
+          title: 'Extract Text',
+          desc: 'Get text and metadata from PDF',
+          accept: '.pdf',
+          multi: false,
+          action: 'Extract Text'
+        }
+      };
+
+      const t = templates[tool];
+      
+      return `
+        <div class="max-w-2xl mx-auto">
+          <div class="text-center mb-8">
+            <h2 class="text-2xl font-bold mb-2">${t.title}</h2>
+            <p class="text-slate-400">${t.desc}</p>
+          </div>
+
+          <div id="drop-zone" class="drop-zone rounded-2xl p-8 text-center cursor-pointer card-gradient border border-white/10">
+            <input type="file" id="file-input" accept="${t.accept}" ${t.multi ? 'multiple' : ''} class="hidden">
+            <div class="flex flex-col items-center">
+              <div class="w-16 h-16 rounded-full bg-indigo-500/20 flex items-center justify-center mb-4 pulse-ring">
+                <svg class="w-8 h-8 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                </svg>
+              </div>
+              <p class="text-lg font-medium mb-2">Drop files here</p>
+              <p class="text-sm text-slate-400">or click to browse</p>
+            </div>
+          </div>
+
+          <div id="file-list" class="mt-6 space-y-3"></div>
+          
+          ${t.extra || ''}
+
+          <div id="action-area" class="mt-8 hidden">
+            <button onclick="processFiles()" class="w-full btn-primary text-white font-semibold py-4 px-6 rounded-xl transition-all hover:shadow-lg hover:shadow-indigo-500/30 disabled:opacity-50">
+              <span id="action-text">${t.action}</span>
+              <span id="action-loading" class="hidden">
+                <svg class="animate-spin inline-block w-5 h-5 ml-2" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Processing...
+              </span>
+            </button>
+          </div>
+
+          <div id="result-area" class="mt-6 hidden">
+            <div class="card-gradient rounded-xl p-6 border border-white/10">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                  <div class="w-12 h-12 rounded-lg bg-emerald-500/20 flex items-center justify-center">
+                    <svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <p class="font-medium" id="result-title">Conversion complete!</p>
+                    <p class="text-sm text-slate-400" id="result-desc"></p>
+                  </div>
+                </div>
+                <button onclick="downloadResult()" class="btn-primary text-white font-medium py-2 px-4 rounded-lg">
+                  Download
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div id="text-result" class="mt-6 hidden">
+            <div class="card-gradient rounded-xl p-6 border border-white/10">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="font-semibold">Extracted Content</h3>
+                <button onclick="copyText()" class="text-sm text-indigo-400 hover:text-indigo-300">Copy</button>
+              </div>
+              <textarea id="extracted-text" readonly class="w-full h-64 bg-slate-900/50 rounded-lg p-4 text-sm text-slate-300 resize-none"></textarea>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Setup drop zone
+    function setupDropZone() {
+      const dropZone = document.getElementById('drop-zone');
+      const fileInput = document.getElementById('file-input');
+
+      dropZone.addEventListener('click', () => fileInput.click());
+      
+      dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+      });
+
+      dropZone.addEventListener('dragleave', () => {
+        dropZone.classList.remove('dragover');
+      });
+
+      dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+        handleFiles(e.dataTransfer.files);
+      });
+
+      fileInput.addEventListener('change', (e) => {
+        handleFiles(e.target.files);
+      });
+    }
+
+    // Handle files
+    function handleFiles(files) {
+      const fileList = document.getElementById('file-list');
+      const actionArea = document.getElementById('action-area');
+      
+      for (const file of files) {
+        currentFiles.push(file);
+      }
+
+      fileList.innerHTML = currentFiles.map((file, i) => `
+        <div class="flex items-center justify-between bg-slate-800/50 rounded-xl p-4 border border-slate-700 slide-in">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-indigo-500/20 flex items-center justify-center">
+              <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+              </svg>
+            </div>
+            <div>
+              <p class="font-medium text-sm">${file.name}</p>
+              <p class="text-xs text-slate-400">${formatSize(file.size)}</p>
+            </div>
+          </div>
+          <button onclick="removeFile(${i})" class="text-slate-400 hover:text-red-400 transition-colors">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+      `).join('');
+
+      if (currentFiles.length > 0) {
+        actionArea.classList.remove('hidden');
+      }
+    }
+
+    function removeFile(index) {
+      currentFiles.splice(index, 1);
+      handleFiles([]);
+      if (currentFiles.length === 0) {
+        document.getElementById('action-area').classList.add('hidden');
+      }
+    }
+
+    function formatSize(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+
+    // Storage for results
+    let resultBlob = null;
+    let resultName = '';
+    let resultType = '';
+
+    // Save to database
+    async function saveConversion(fileName, conversionType, originalSize, convertedSize, convertedBlob) {
+      try {
+        // Store blob in memory (converted to data URL)
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+          const dataUrl = e.target.result;
+          
+          // Save metadata to database
+          const result = await window.dataSdk.create({
+            fileName: `${Date.now()}-${resultName}`,
+            conversionType: conversionType,
+            originalFileName: fileName,
+            originalSize: originalSize,
+            convertedSize: convertedSize,
+            downloadUrl: dataUrl,
+            status: 'completed',
+            createdAt: new Date().toISOString()
+          });
+
+          if (result.isOk) {
+            console.log('Saved to database');
+          } else {
+            console.error('Save error:', result.error);
+          }
+        };
+        reader.readAsDataURL(convertedBlob);
+      } catch (error) {
+        console.error('Database save error:', error);
+      }
+    }
+
+    // Process files
+    async function processFiles() {
+      const actionText = document.getElementById('action-text');
+      const actionLoading = document.getElementById('action-loading');
+      const btn = document.querySelector('#action-area button');
+      
+      if (!currentFiles || currentFiles.length === 0) {
+        showToast('Please select a file', 'error');
+        return;
+      }
+
+      actionText.classList.add('hidden');
+      actionLoading.classList.remove('hidden');
+      btn.disabled = true;
+
+      try {
+        switch (currentTool) {
+          case 'merge':
+            await mergePDFs();
+            break;
+          case 'split':
+            await splitPDF();
+            break;
+          case 'compress':
+            await compressPDF();
+            break;
+          case 'watermark':
+            await addWatermark();
+            break;
+          case 'word-to-pdf':
+            await convertWordToPDF();
+            break;
+          case 'pdf-to-text':
+            await extractText();
+            break;
+        }
+      } catch (error) {
+        console.error('Processing error:', error);
+        showToast('Error: ' + error.message, 'error');
+      } finally {
+        actionText.classList.remove('hidden');
+        actionLoading.classList.add('hidden');
+        btn.disabled = false;
+      }
+    }
+
+    // Merge PDFs
+    async function mergePDFs() {
+      if (currentFiles.length < 2) {
+        showToast('Add at least 2 PDFs to merge', 'error');
+        return;
+      }
+
+      const { PDFDocument } = PDFLib;
+      const mergedPdf = await PDFDocument.create();
+
+      for (const file of currentFiles) {
+        try {
+          const arrayBuffer = await file.arrayBuffer();
+          const pdf = await PDFDocument.load(arrayBuffer);
+          const pages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
+          pages.forEach(page => mergedPdf.addPage(page));
+        } catch (e) {
+          showToast(`Error: Could not process ${file.name}`, 'error');
+          return;
+        }
+      }
+
+      const pdfBytes = await mergedPdf.save();
+      resultBlob = new Blob([pdfBytes], { type: 'application/pdf' });
+      resultName = 'merged.pdf';
+      resultType = 'Merge PDF';
+      
+      document.getElementById('result-area').classList.remove('hidden');
+      document.getElementById('result-title').textContent = 'Merged successfully!';
+      document.getElementById('result-desc').textContent = `${currentFiles.length} files • ${formatSize(resultBlob.size)}`;
+      
+      await saveConversion(currentFiles[0].name, resultType, currentFiles.reduce((a,b) => a + b.size, 0), resultBlob.size, resultBlob);
+      showToast('PDFs merged successfully!');
+    }
+
+    // Split PDF
+    async function splitPDF() {
+      const pageRange = document.getElementById('page-range').value.trim();
+      if (!pageRange) {
+        showToast('Enter page range', 'error');
+        return;
+      }
+
+      const { PDFDocument } = PDFLib;
+      const arrayBuffer = await currentFiles[0].arrayBuffer();
+      const sourcePdf = await PDFDocument.load(arrayBuffer);
+      const totalPages = sourcePdf.getPageCount();
+
+      const pages = parsePageRange(pageRange, totalPages);
+      if (pages.length === 0) {
+        showToast('Invalid page range', 'error');
+        return;
+      }
+
+      const newPdf = await PDFDocument.create();
+      const copiedPages = await newPdf.copyPages(sourcePdf, pages.map(p => p - 1));
+      copiedPages.forEach(page => newPdf.addPage(page));
+
+      const pdfBytes = await newPdf.save();
+      resultBlob = new Blob([pdfBytes], { type: 'application/pdf' });
+      resultName = 'split.pdf';
+      resultType = 'Split PDF';
+      
+      document.getElementById('result-area').classList.remove('hidden');
+      document.getElementById('result-title').textContent = 'Split successfully!';
+      document.getElementById('result-desc').textContent = `${pages.length} page(s) • ${formatSize(resultBlob.size)}`;
+      
+      await saveConversion(currentFiles[0].name, resultType, currentFiles[0].size, resultBlob.size, resultBlob);
+      showToast('PDF split successfully!');
+    }
+
+    function parsePageRange(range, max) {
+      const pages = new Set();
+      const parts = range.split(',');
+      
+      for (const part of parts) {
+        const trimmed = part.trim();
+        if (trimmed.includes('-')) {
+          const [start, end] = trimmed.split('-').map(n => parseInt(n.trim()));
+          for (let i = Math.max(1, start); i <= Math.min(max, end); i++) {
+            pages.add(i);
+          }
+        } else {
+          const num = parseInt(trimmed);
+          if (num >= 1 && num <= max) {
+            pages.add(num);
+          }
+        }
+      }
+      
+      return Array.from(pages).sort((a, b) => a - b);
+    }
+
+    // Compress PDF
+    async function compressPDF() {
+      const { PDFDocument } = PDFLib;
+      const arrayBuffer = await currentFiles[0].arrayBuffer();
+      const originalSize = arrayBuffer.byteLength;
+      
+      const pdf = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
+      pdf.setTitle('');
+      pdf.setAuthor('');
+      pdf.setSubject('');
+      pdf.setKeywords([]);
+      
+      const pdfBytes = await pdf.save({ useObjectStreams: true });
+      
+      resultBlob = new Blob([pdfBytes], { type: 'application/pdf' });
+      resultName = 'compressed.pdf';
+      resultType = 'Compress PDF';
+      
+      const savings = ((originalSize - resultBlob.size) / originalSize * 100).toFixed(1);
+      
+      document.getElementById('result-area').classList.remove('hidden');
+      document.getElementById('result-title').textContent = 'Compressed!';
+      document.getElementById('result-desc').textContent = `${formatSize(originalSize)} → ${formatSize(resultBlob.size)} (${savings}% smaller)`;
+      
+      await saveConversion(currentFiles[0].name, resultType, originalSize, resultBlob.size, resultBlob);
+      showToast(`Compressed! Reduced by ${savings}%`);
+    }
+
+    // Add Watermark
+    async function addWatermark() {
+      const text = document.getElementById('watermark-text').value.trim() || 'WATERMARK';
+      const opacity = Math.max(0.1, Math.min(1, parseInt(document.getElementById('watermark-opacity').value) / 100));
+      const rotation = Math.max(0, Math.min(360, parseInt(document.getElementById('watermark-rotation').value)));
+
+      const { PDFDocument, rgb, degrees } = PDFLib;
+      const arrayBuffer = await currentFiles[0].arrayBuffer();
+      const pdf = await PDFDocument.load(arrayBuffer);
+      const pages = pdf.getPages();
+
+      for (const page of pages) {
+        try {
+          const { width, height } = page.getSize();
+          page.drawText(text, {
+            x: width / 2 - (text.length * 3),
+            y: height / 2,
+            size: 60,
+            color: rgb(0.5, 0.5, 0.5),
+            opacity: opacity,
+            rotate: degrees(rotation)
+          });
+        } catch (e) {
+          console.error('Watermark error:', e);
+        }
+      }
+
+      const pdfBytes = await pdf.save();
+      resultBlob = new Blob([pdfBytes], { type: 'application/pdf' });
+      resultName = 'watermarked.pdf';
+      resultType = 'Add Watermark';
+      
+      document.getElementById('result-area').classList.remove('hidden');
+      document.getElementById('result-title').textContent = 'Watermark added!';
+      document.getElementById('result-desc').textContent = `Applied to ${pages.length} page(s)`;
+      
+      await saveConversion(currentFiles[0].name, resultType, currentFiles[0].size, resultBlob.size, resultBlob);
+      showToast('Watermark added successfully!');
+    }
+
+    // Convert Word to PDF
+    async function convertWordToPDF() {
+      const arrayBuffer = await currentFiles[0].arrayBuffer();
+      
+      let text = '';
+      try {
+        const result = await mammoth.extractRawText({ arrayBuffer });
+        text = result.value || '';
+      } catch (e) {
+        text = '[Unable to extract content]';
+      }
+
+      const { PDFDocument, rgb } = PDFLib;
+      const pdf = await PDFDocument.create();
+      
+      if (!text || text.trim().length === 0) {
+        text = '[Empty or unsupported document]';
+      }
+
+      const lines = text.split('\n');
+      const fontSize = 11;
+      const lineHeight = 14;
+      const margin = 40;
+      const pageHeight = 792;
+      const pageWidth = 612;
+      const usableWidth = pageWidth - (margin * 2);
+      
+      let currentPage = pdf.addPage([pageWidth, pageHeight]);
+      let yPos = pageHeight - margin;
+
+      for (let line of lines) {
+        line = line.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '').trim();
+        
+        if (!line) {
+          yPos -= lineHeight;
+          if (yPos < margin) {
+            currentPage = pdf.addPage([pageWidth, pageHeight]);
+            yPos = pageHeight - margin;
+          }
+          continue;
+        }
+
+        const words = line.split(' ');
+        let currentLine = '';
+        
+        for (const word of words) {
+          const testLine = currentLine ? currentLine + ' ' + word : word;
+          const estimatedWidth = testLine.length * 6.5;
+          
+          if (estimatedWidth > usableWidth && currentLine) {
+            try {
+              currentPage.drawText(currentLine, {
+                x: margin,
+                y: yPos,
+                size: fontSize,
+                color: rgb(0, 0, 0)
+              });
+            } catch (e) {
+              console.error('Draw error:', e);
+            }
+            
+            yPos -= lineHeight;
+            if (yPos < margin) {
+              currentPage = pdf.addPage([pageWidth, pageHeight]);
+              yPos = pageHeight - margin;
+            }
+            currentLine = word;
+          } else {
+            currentLine = testLine;
+          }
+        }
+        
+        if (currentLine.trim()) {
+          try {
+            currentPage.drawText(currentLine, {
+              x: margin,
+              y: yPos,
+              size: fontSize,
+              color: rgb(0, 0, 0)
+            });
+          } catch (e) {
+            console.error('Draw error:', e);
+          }
+          yPos -= lineHeight;
+          if (yPos < margin) {
+            currentPage = pdf.addPage([pageWidth, pageHeight]);
+            yPos = pageHeight - margin;
+          }
+        }
+      }
+
+      const pdfBytes = await pdf.save();
+      resultBlob = new Blob([pdfBytes], { type: 'application/pdf' });
+      resultName = currentFiles[0].name.replace(/\.docx$/i, '.pdf');
+      resultType = 'Word to PDF';
+      
+      document.getElementById('result-area').classList.remove('hidden');
+      document.getElementById('result-title').textContent = 'Converted!';
+      document.getElementById('result-desc').textContent = `${pdf.getPageCount()} page(s) • ${formatSize(resultBlob.size)}`;
+      
+      await saveConversion(currentFiles[0].name, resultType, currentFiles[0].size, resultBlob.size, resultBlob);
+      showToast('Converted to PDF successfully!');
+    }
+
+    // Extract Text
+    async function extractText() {
+      const { PDFDocument } = PDFLib;
+      const arrayBuffer = await currentFiles[0].arrayBuffer();
+      
+      try {
+        const pdf = await PDFDocument.load(arrayBuffer);
+        const info = [
+          `File: ${currentFiles[0].name}`,
+          `Pages: ${pdf.getPageCount()}`,
+          `Size: ${formatSize(currentFiles[0].size)}`,
+          `Title: ${pdf.getTitle() || '(Not set)'}`,
+          `Author: ${pdf.getAuthor() || '(Not set)'}`,
+          `---`,
+          'Document metadata extracted successfully!'
+        ];
+
+        document.getElementById('text-result').classList.remove('hidden');
+        document.getElementById('extracted-text').value = info.join('\n');
+        
+        resultType = 'Extract Text';
+        await saveConversion(currentFiles[0].name, resultType, currentFiles[0].size, 0, new Blob());
+        showToast('Text extracted!');
+      } catch (error) {
+        showToast('Error: Could not extract text', 'error');
+      }
+    }
+
+    // Copy text
+    function copyText() {
+      const text = document.getElementById('extracted-text').value;
+      navigator.clipboard.writeText(text).then(() => {
+        showToast('Copied!');
+      });
+    }
+
+    // Download result
+    function downloadResult() {
+      if (!resultBlob) return;
+      
+      const url = URL.createObjectURL(resultBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = resultName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('Download started!');
+    }
+
+    // Download from history
+    function downloadConversion(backendId) {
+      const conversion = allConversions.find(c => c.__backendId === backendId);
+      if (conversion && conversion.downloadUrl) {
+        const a = document.createElement('a');
+        a.href = conversion.downloadUrl;
+        a.download = conversion.fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        showToast('Download started!');
+      }
+    }
+
+    // Delete from history
+    async function deleteConversion(backendId) {
+      const conversion = allConversions.find(c => c.__backendId === backendId);
+      if (!conversion) return;
+
+      const result = await window.dataSdk.delete(conversion);
+      if (result.isOk) {
+        showToast('Deleted from history');
+        renderHistory();
+      } else {
+        showToast('Error deleting', 'error');
+      }
+    }
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9d1f9f9e63dc8b82',t:'MTc3MTc3NTI2My4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
