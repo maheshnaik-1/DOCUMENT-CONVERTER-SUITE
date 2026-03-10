@@ -1,11 +1,11 @@
 # Document-Converter-Suite
 
-# DocFlow
 I got tired of using "free" online converters that were either covered in ads, forced me to create an account, or—worst of all—uploaded my private documents to their servers.
 
 DocFlow is my solution to that. It’s a clean, fast, and entirely private document toolkit that runs 100% in your browser. Your files never leave your computer.
 
 # What it actually does
+
 I built this to cover the "daily essentials" of document management:
 
 PDF Merging: Drag, drop, and combine. Simple as that.
@@ -21,6 +21,7 @@ Custom Watermarking: Add "Confidential" or "Draft" stamps with total control ove
 Text Peeking: A quick way to grab metadata or raw text from a PDF without opening a full editor.
 
 # How I built it
+
 The goal was a "zero-install" experience. I used Tailwind CSS for the dark-mode/glassmorphism UI because it looks great and stays lightweight. The heavy lifting is done by PDF-Lib and Mammoth.js, which are incredible libraries for client-side file manipulation.
 
 I also integrated a local Data SDK so your conversion history stays saved in your browser, not on a server database somewhere.
