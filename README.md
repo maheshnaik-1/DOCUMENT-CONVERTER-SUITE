@@ -15,7 +15,7 @@ C.Manoj Kumar
 
 I got tired of using "free" online converters that were either covered in ads, forced me to create an account, or—worst of all—uploaded my private documents to their servers.
 
-Document Converter Suite is my solution to that. It’s a clean, fast, and entirely private document toolkit that runs 100% in your browser. Your files never leave your computer.
+DocFlow is my solution to that. It’s a clean, fast, and entirely private document toolkit that runs 100% in your browser. Your files never leave your computer.
 
 # What it actually does
 
